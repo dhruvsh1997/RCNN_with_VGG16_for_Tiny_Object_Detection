@@ -28,7 +28,7 @@ __pycache__/
 envRCNNObj/
 
 # Jupyter Notebook
-.ipynb_checkpoints/
+# .ipynb_checkpoints/
 
 
 # IDE
