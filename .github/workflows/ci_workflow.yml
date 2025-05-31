@@ -39,7 +39,7 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     - name: 🛠️ Build and Push Docker Image
-      uses: dhruvsh1997/docker-build-push@v4
+      uses: dhruvsh1997/build-push-action@v5
       with:
         image: dhruvsh1997/rcnn_object_det:latest
         registry: docker.io
