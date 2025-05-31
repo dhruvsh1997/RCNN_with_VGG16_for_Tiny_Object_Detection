@@ -29,7 +29,7 @@ envRCNNObj/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
-Notebook/.ipynb_checkpoints/
+
 
 # IDE
 .idea/
