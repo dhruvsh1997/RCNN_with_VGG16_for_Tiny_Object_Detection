@@ -1,0 +1,36 @@
+# Django
+*.log
+*.h5
+*.sqlite3
+*.sqlite3-journal
+
+media/*.h5
+
+# Static and media files
+staticfiles/
+# object_detection_RCNN/media/
+# !object_detection_RCNN/media/improved_rcnn_model.h5  # keep this specific file
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.so
+.Python
+
+# Migrations (except __init__.py)
+# /*/migrations/*
+# !*/migrations/__init__.py
+
+# Environments
+.env
+.venv/
+envRCNNObj/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+Notebook/.ipynb_checkpoints/
+
+# IDE
+.idea/
+.vscode/

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCNN Object Detection</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px auto;
+            padding: 40px;
+            max-width: 1400px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2c3e50;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #6c757d;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .upload-area {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .process-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            display: none;
+        }
+        
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+        
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .image-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner-border {
+            color: #667eea;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .detection-stats {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .detection-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .detection-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .confidence-bar {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .confidence-fill {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            height: 100%;
+            transition: width 0.8s ease;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        .alert-success {
+            background: linear-gradient(45deg, #d4edda, #c3e6cb);
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(45deg, #f8d7da, #f1b0b7);
+            color: #721c24;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-area {
+                padding: 20px 10px;
+            }
+            
+            .upload-icon {
+                font-size: 3rem;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-eye"></i> RCNN Object Detection</h1>
+                <p>Upload an image to detect objects using our trained RCNN model</p>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="upload-section">
+                        <div class="upload-area">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <h4>Choose an Image</h4>
+                            <p class="mb-3">Select an image file to detect objects</p>
+                            <input type="file" id="imageInput" class="file-input" accept="image/*">
+                            <button class="upload-btn" onclick="document.getElementById('imageInput').click()">
+                                <i class="fas fa-images me-2"></i>Select Image
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button id="processBtn" class="process-btn">
+                                <i class="fas fa-cogs me-2"></i>Process Image
+                            </button>
+                        </div>
+                        
+                        <div class="loading-spinner" id="loadingSpinner">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Processing...</span>
+                            </div>
+                            <p class="mt-2">Processing image... Please wait</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Original Image -->
+                    <div id="originalImageContainer" class="image-container" style="display: none;">
+                        <h5><i class="fas fa-image me-2"></i>Original Image</h5>
+                        <img id="originalImage" class="image-preview" alt="Original Image">
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <!-- Result Image -->
+                    <div id="resultImageContainer" class="image-container" style="display: none;">
+                        <h5><i class="fas fa-crosshairs me-2"></i>Detection Results</h5>
+                        <img id="resultImage" class="image-preview fade-in" alt="Detection Results">
+                    </div>
+                    
+                    <!-- Detection Results -->
+                    <div id="resultsSection" class="results-section">
+                        <div class="detection-stats">
+                            <div class="row">
+                                <div class="col-6 stat-item">
+                                    <span id="objectCount" class="stat-number">0</span>
+                                    <span class="stat-label">Objects Detected</span>
+                                </div>
+                                <div class="col-6 stat-item">
+                                    <span id="avgConfidence" class="stat-number">0%</span>
+                                    <span class="stat-label">Avg Confidence</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6><i class="fas fa-list me-2"></i>Detection Details</h6>
+                        <div id="detectionList" class="detection-list">
+                            <!-- Detection items will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alert Messages -->
+            <div id="alertContainer"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let selectedFile = null;
+
+        // Handle file selection
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                displayOriginalImage(file);
+                document.getElementById('processBtn').style.display = 'inline-block';
+                hideResults();
+            }
+        });
+
+        // Display original image
+        function displayOriginalImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('originalImage').src = e.target.result;
+                document.getElementById('originalImageContainer').style.display = 'block';
+                document.getElementById('originalImageContainer').classList.add('fade-in');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Process image
+        document.getElementById('processBtn').addEventListener('click', function() {
+            if (!selectedFile) {
+                showAlert('Please select an image first.', 'danger');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            // Show loading
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('processBtn').disabled = true;
+            hideResults();
+
+            // Send request
+            fetch('/process/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+
+                if (data.success) {
+                    displayResults(data);
+                    showAlert(`Successfully detected ${data.total_objects} object(s)!`, 'success');
+                } else {
+                    showAlert(data.error || 'An error occurred during processing.', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+                showAlert('Network error occurred. Please try again.', 'danger');
+            });
+        });
+
+        // Display results
+        function displayResults(data) {
+            // Show result image
+            document.getElementById('resultImage').src = data.result_image;
+            document.getElementById('resultImageContainer').style.display = 'block';
+            document.getElementById('resultImageContainer').classList.add('fade-in');
+
+            // Update statistics
+            document.getElementById('objectCount').textContent = data.total_objects;
+            
+            const avgConf = data.detections.length > 0 
+                ? (data.detections.reduce((sum, det) => sum + det.confidence, 0) / data.detections.length * 100).toFixed(1)
+                : 0;
+            document.getElementById('avgConfidence').textContent = avgConf + '%';
+
+            // Populate detection list
+            const detectionList = document.getElementById('detectionList');
+            detectionList.innerHTML = '';
+
+            data.detections.forEach((detection, index) => {
+                const detectionItem = document.createElement('div');
+                detectionItem.className = 'detection-item slide-in';
+                detectionItem.style.animationDelay = `${index * 0.1}s`;
+                
+                detectionItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${detection.class}</strong>
+                            <small class="text-muted d-block">
+                                Bbox: [${detection.bbox.map(b => Math.round(b)).join(', ')}]
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">${(detection.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${detection.confidence * 100}%"></div>
+                    </div>
+                `;
+                
+                detectionList.appendChild(detectionItem);
+            });
+
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('resultsSection').classList.add('fade-in');
+        }
+
+        // Hide results
+        function hideResults() {
+            document.getElementById('resultImageContainer').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto-hide success alerts
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
+            }
+        }
+
+        // Get CSRF token
+        function getCsrfToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+
+        // Drag and drop functionality
+        const uploadSection = document.querySelector('.upload-section');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadSection.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadSection.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadSection.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            uploadSection.style.borderColor = '#667eea';
+            uploadSection.style.backgroundColor = '#f0f4ff';
+        }
+        
+        function unhighlight() {
+            uploadSection.style.borderColor = '#dee2e6';
+            uploadSection.style.backgroundColor = '#f8f9fa';
+        }
+        
+        uploadSection.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    selectedFile = file;
+                    displayOriginalImage(file);
+                    document.getElementById('processBtn').style.display = 'inline-block';
+                    hideResults();
+                } else {
+                    showAlert('Please drop an image file.', 'danger');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
