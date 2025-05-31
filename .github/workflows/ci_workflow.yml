@@ -10,7 +10,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest # 👈 This is environment where your job will run ubuntu-22.04
-    environment: RCNNEnv   # 👈 This links the job to your environment with secrets
+    environment: RCNNEnv   # 👈 This links the job to your environment with secret
 
     steps:
     - name: 📥 Checkout Repository
